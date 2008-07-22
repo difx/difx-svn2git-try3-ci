@@ -1019,7 +1019,12 @@ def makedatastreamtable(subarray, antennalist, config, job, freqlist, setups):
 				inputBandList.append([band, polar[i][1], index, trackNum])
 			# write input band descriptions in record channel order
 			inputBandList.sort()
+			last = -1
 			for b in inputBandList:
+				if b[0] == last:
+					print '*** Warning: two INPUT BANDs with same index'
+					print 'Did someone forget DISCUPPER in a .fx file?'
+				last = b[0]
 				dst.append(indent21_1("INPUT BAND %d POL", \
 					"%s", b[0], b[1]))
 				dst.append(indent21_1("INPUT BAND %d INDEX", \
