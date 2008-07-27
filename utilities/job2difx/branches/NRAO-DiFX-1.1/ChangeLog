@@ -25,6 +25,7 @@ job2difx
 Version 1.10
 * more complete removal of old files if ovewrwriting previous job2difx run
 * put DIFX VERSION in .calc file
+* merge .flag file rows when possible
 * version for NRAO-DiFX 1.1
 
 Version 1.9
@@ -76,6 +77,7 @@ calcif2
 ~~~~~~~
 Version 0.2
 * by default zero negative delays
+* don't include atmosphere in UVW calculation
 
 Version 0.1
 * complete rewrite of calcif.  Differences from calcif:

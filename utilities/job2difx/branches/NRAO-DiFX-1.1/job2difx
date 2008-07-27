@@ -1153,8 +1153,31 @@ def makedatatable(mjd0, mjd1, antennalist, subarray, job, nsetups):
 			n += 1
 	return data
 
+def mergeflags(flags):
+	af = {}
+	for f in flags:
+		a = f[2]
+		if af.has_key(a):
+			if f[0] <= af[a][-1][1] + 1.0/86400.0:
+				# extend previous flag
+				af[a][-1][1] = f[1]
+			else:
+				af[a].append([f[0], f[1], f[2]])
+		else:
+			af[a] = [f]
+	flags = []
+	keys = af.keys()
+	keys.sort()
+	for key in keys:
+		a = af[key]
+		for f in a:
+			flags.append(f)
+	return flags
+	
+
 def makeflagtable(scans, subarray, subarray_num):
 	flag = []
+	flags = []
 	for scan in scans:
 		if len(scan[6]) <= subarray_num:
 			print 'Warning : makeflagtable: subarray_num too big', subarray_num
@@ -1163,8 +1186,12 @@ def makeflagtable(scans, subarray, subarray_num):
 		for i in range(len(subarray)):
 			a = subarray[i]
 			if a not in ants:
-				flag.append("%12.6f %12.6f %d" % \
-					(scan[2], scan[3], i))
+				flags.append([scan[2], scan[3], i])
+
+	flags = mergeflags(flags)
+	for f in flags:
+		flag.append("%12.6f %12.6f %d" % \
+			(f[0], f[1], f[2]))
 	return flag
 
 def getshelves(antennalist, subarray, job):
