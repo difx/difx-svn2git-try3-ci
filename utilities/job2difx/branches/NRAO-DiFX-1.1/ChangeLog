@@ -26,6 +26,7 @@ Version 1.10
 * more complete removal of old files if ovewrwriting previous job2difx run
 * put DIFX VERSION in .calc file
 * merge .flag file rows when possible
+* fix bin ordering for pulsars.  Still something awry here.
 * version for NRAO-DiFX 1.1
 
 Version 1.9
