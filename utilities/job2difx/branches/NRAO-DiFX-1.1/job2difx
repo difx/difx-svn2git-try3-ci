@@ -3,7 +3,7 @@
 from sys import argv, exit
 from string import strip, split, find, lower, upper
 from math import pi, ceil
-from os import getcwd, system, getenv
+from os import getcwd, system, getenv, umask
 import re
 
 program = 'job2difx'
@@ -19,7 +19,6 @@ verbose = 0
 multiconfig = 0
 visbufferlength = 32
 spectrunc = 2	# do this much spectral truncation before doing decimation
-calcif = "calcif2"
 
 def usage():
 	print '\n%s ver. %s   %s %s' % (program, version, verdate, author)
@@ -1688,108 +1687,6 @@ def dupsched(job, masterant):
 
 #############
 
-def genMakefile(joblist, verbose):
-	all = "all: $(fitss)"
-	clean = "clean:\n\trm -rf $(uvws)\n\trm -rf $(threads)\n\trm -rf $(machines)\n\trm -rf $(delays)\n\trm -rf $(rates)\n\trm -rf $(flags)\n\trm -rf $(calcs)\n\trm -rf $(fitss)"
-	uvws = "uvws ="
-	inputs = "inputs ="
-	delays = "delays ="
-	rates = "rates ="
-	flags = "flags ="
-	calcs = "calc ="
-	threads = "threads ="
-	machines = "machines ="
-	fitss = "fitss ="
-	cfitss = "cfitss ="
-	cjobs = {}
-	
-	if verbose > 1:
-		print 'Makefile: JOBLIST=', joblist
-	
-	for jobinfo in joblist:
-		job = jobinfo[0]
-		cjob = jobinfo[1]+'.'+split(job, '.')[0][3:]
-		if cjobs.has_key(cjob):
-			cjobs[cjob].append(job)
-		else:
-			cjobs[cjob] = [job]
-		if job[0:3] == 'job':
-			jnum = job[3:]
-		else:
-			jnum = job
-		fitsfile = '%s.%s.FITS' % (jobinfo[1], jnum)
-		uvws += " %s.uvw" % job
-		threads += " %s.threads" % job
-		machines += " %s.machines" % job
-		inputs += " %s.input" % job
-		delays += " %s.delay" % job
-		rates += " %s.rate" % job
-		calcs += " %s.calc" % job
-		flags += " %s.flag" % job
-		fitss += " %s" % fitsfile
-	
-	fitskeys = cjobs.keys()
-	fitskeys.sort()
-	for k in fitskeys:
-		cfitss += " %s.FITS" % k
-	
-	Makefile = open('Makefile', 'w')
-	Makefile.write(uvws+"\n\n")
-	Makefile.write(threads+"\n\n")
-	Makefile.write(machines+"\n\n")
-	Makefile.write(inputs+"\n\n")
-	Makefile.write(delays+"\n\n")
-	Makefile.write(rates+"\n\n")
-	Makefile.write(calcs+"\n\n")
-	Makefile.write(flags+"\n\n")
-	Makefile.write(fitss+"\n\n")
-	Makefile.write(cfitss+"\n\n")
-	Makefile.write(all+"\n\n")
-	Makefile.write('delays: $(uvws)\n\n')
-	Makefile.write('uvws: $(uvws)\n\n')
-	Makefile.write("FITS: $(cfitss)\n\n")
-	
-	Makefile.write(clean+"\n\n")
-	fitslist = []
-	for jobinfo in joblist:
-		job = jobinfo[0]
-		if job[0:3] == 'job':
-			jnum = job[3:]
-		else:
-			jnum = job
-		obscode = jobinfo[1]
-		fitslist.append('%s.%s.FITS' % (obscode, jnum))
-		fitsfile = '%s.%s.FITS' % (obscode, jnum)
-		Makefile.write("%s.uvw: %s.calc\n\t%s %s.calc\n\n" % (job, job, calcif, job))
-		Makefile.write("%s.machines: %s.input\n\tgenmachines %s.input\n\n" % (job, job, job))
-#		Makefile.write("%s.threads:  template.threads\n\tcp template.threads %s.threads\n\n" % (job, job))
-#		Makefile.write("%s.difx: %s.uvw %s.delay %s.input %s.machines\n" % (job, job, job, job, job))
-		Makefile.write("%s.difx: %s.uvw %s.delay %s.input\n" % (job, job, job, job))
-		Makefile.write("\t#genmachines %s.input\n\n" % job)
-		Makefile.write("\t#rm -rf %s.difx\n" % job)
-		Makefile.write("\tdate\n")
-		Makefile.write("\t#mpirun -np `cat %s.machines | wc -l` --bynode --hostfile %s.machines  /users/wbrisken/src/SWcorr/trunk/difx/mpifxcorr/src/mpifxcorr `pwd`/%s.input\n" % (job, job, job))
-		Makefile.write("\tstartdifx -a -f %s\n" % job)
-		Makefile.write("\tdate\n\n")
-		Makefile.write("%s: %s.difx %s.uvw %s.delay %s.rate %s.calc \n\tdifx2fits %s %s\n\n" % (fitsfile, job, job, job, job, job, job, fitsfile))
-	for i in range(len(fitslist)):
-		Makefile.write("\n%d : %s\n" % ((i+1), fitslist[i]))
-
-	Makefile.write("\n")
-
-	for k in fitskeys:
-		deps = ''
-		roots = ''
-		for d in cjobs[k]:
-			deps += ' %s.difx' % d
-			roots += ' %s' % d
-		Makefile.write('%s.FITS:%s\n' % (k, deps))
-		Makefile.write('\tdifx2fits %s %s.FITS\n\n' % (roots, k))
-
-	Makefile.close()
-
-#############
-
 if len(argv) < 2:
 	usage()
 else:
@@ -1849,6 +1746,9 @@ else:
 		minsubarraysize = len(antennalist)
 		print 'min subarray size reduced to ', minsubarraysize
 			
+	if getenv('DIFX_GROUP_ID'):
+		umask(2)
+
 	print 'Processing files : ', files
 
 	# read jobs
@@ -1869,5 +1769,3 @@ else:
 			processjobfile(file[1], file[0], antennalist, \
 				fftsize, nchan, tint, minsubarraysize, \
 				joblist, difxversion)
-		# make Makefile
-	#genMakefile(joblist, verbose)
