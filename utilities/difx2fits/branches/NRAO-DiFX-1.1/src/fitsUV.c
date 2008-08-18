@@ -456,7 +456,7 @@ int DifxVisNewUVData(DifxVis *dv, int verbose)
 	/* for now, force nFloat = 2 (one weight for entire vis record) */
 	nFloat = 2;
 	readSize = nFloat * dv->D->nInChan;
-	if(bl != dv->baseline || fabs(mjd -  dv->mjd) > 1.0/86400000.0)
+	if(bl != dv->baseline || fabs(mjd - dv->mjd) > 1.0/86400000.0)
 	{
 		changed = 1;
 		dv->baseline = bl;

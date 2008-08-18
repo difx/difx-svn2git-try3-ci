@@ -3,6 +3,8 @@ Version 2.3
 * Option to force each input file into its own output file
 * Pay attention to difx versions
 * Don't write out vis records that occur over a scan change
+* int -> double mjd for gain curve selection
+* Respect DIFX_GROUP_ID and set umask
 * Version for NRAO-DiFX 1.1
 
 Version 2.2
