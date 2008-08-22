@@ -1,11 +1,11 @@
 #include "fits.h"
 
 #include <stdlib.h>
-#include <sys/types.h>
 #include <string.h>
 #include <strings.h>
 #include "config.h"
 #include "fitsUV.h"
+#include "sniffer.h"
 
 
 static int DifxVisInitData(DifxVis *dv)
@@ -790,12 +790,13 @@ static int readvisrecord(DifxVis *dv, int verbose)
 	return 0;
 }
 
-int DifxVisConvert(const DifxInput *D, struct fits_keywords *p_fits_keys, 
-	struct fitsPrivate *out, double s, int verbose)
+static int DifxVisConvert(const DifxInput *D, 
+	struct fits_keywords *p_fits_keys, struct fitsPrivate *out, 
+	double s, int verbose, double sniffTime)
 {
-	int v;
-	int j;
+	int i, j, l, v;
 	float visScale = 1.0;
+	char fileBase[200];
 	char dateStr[12];
 	char fluxFormFloat[8];
 	char gateFormInt[8];
@@ -813,6 +814,7 @@ int DifxVisConvert(const DifxInput *D, struct fits_keywords *p_fits_keys,
 	double scale;
 	DifxVis **dvs;
 	DifxVis *dv;
+	Sniffer *S = 0;
 
 	/* define the columns in the UV data FITS Table */
 	struct fitsBinTableColumn columns[] =
@@ -844,6 +846,7 @@ int DifxVisConvert(const DifxInput *D, struct fits_keywords *p_fits_keys,
 		{
 			fprintf(stderr, "Error allocating DifxVis[%d/%d]\n",
 				j, D->nJob);
+			deleteSniffer(S);
 			return 0;
 		}
 		dvs[j]->scale = scale;
@@ -853,6 +856,22 @@ int DifxVisConvert(const DifxInput *D, struct fits_keywords *p_fits_keys,
 	dv = dvs[0];
 
 	nWeight = dv->nFreq*D->nPolar;
+
+	/* Start up sniffer */
+	if(sniffTime > 0.0)
+	{
+		strcpy(fileBase, out->filename);
+		l = strlen(fileBase);
+		for(i = l-1; i > 0; i--)
+		{
+			if(fileBase[i] == '.')
+			{
+				fileBase[i] = 0;
+				break;
+			}
+		}
+		S = newSniffer(D, dv->nComplex, fileBase, sniffTime);
+	}
 
 	/* set the number of weight and flux values*/
 	sprintf(weightFormFloat, "%dE", nWeight);
@@ -965,6 +984,7 @@ int DifxVisConvert(const DifxInput *D, struct fits_keywords *p_fits_keys,
 		}
 		else
 		{
+			feedSnifferFITS(S, dv->record);
 #ifndef WORDS_BIGENDIAN
 			FitsBinRowByteSwap(columns, nColumn, 
 				dv->record);
@@ -986,6 +1006,7 @@ int DifxVisConvert(const DifxInput *D, struct fits_keywords *p_fits_keys,
 				fprintf(stderr, "Error in "
 					"DifxVisCollectRandomParams : "
 					"return value = %d\n", v);
+				deleteSniffer(S);
 				return -3;
 			}
 
@@ -1006,20 +1027,22 @@ int DifxVisConvert(const DifxInput *D, struct fits_keywords *p_fits_keys,
 
 	free(dvs);
 
+	deleteSniffer(S);
+
 	return 0;
 }
 
 const DifxInput *DifxInput2FitsUV(const DifxInput *D,
 	struct fits_keywords *p_fits_keys,
 	struct fitsPrivate *out, double scale,
-	int verbose)
+	int verbose, double sniffTime)
 {
 	if(D == 0)
 	{
 		return 0;
 	}
 
-	DifxVisConvert(D, p_fits_keys, out, scale, verbose);
+	DifxVisConvert(D, p_fits_keys, out, scale, verbose, sniffTime);
 
 	return D;
 }
