@@ -580,22 +580,12 @@ static int add(Accumulator *A, int bbc, int index, float weight,
 	fftw_complex *array;
 	complex float *z;
 	int c;
-	static int first=1;
 
 	array = A->spectrum[bbc][index];
 	for(c = 0; c < A->nChan; c++)
 	{
 		z = (complex float *)(data + c*stride);
 		array[c] += (*z)*weight;
-		if(A->a1 == A->a2 && first == 1)
-		{
-			printf("%f %f\n", creal(*z), cimag(*z));
-		}
-	}
-
-	if(A->a1 == A->a2 && first == 1)
-	{
-		first = 0;
 	}
 
 	A->nRec[bbc]++;
