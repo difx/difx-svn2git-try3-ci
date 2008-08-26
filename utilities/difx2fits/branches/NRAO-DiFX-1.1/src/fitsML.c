@@ -231,7 +231,7 @@ const DifxInput *DifxInput2FitsML(const DifxInput *D,
 
 	          for(k = 0; k < array_N_POLY; k++)
 		  {
-		    gpoly[k] = P->delay[k]*1.0e-6;
+		    gpoly[k] = -P->delay[k]*1.0e-6;
 		  }
 		}
 		else	   /* use tabulated model */
