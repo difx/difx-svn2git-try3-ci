@@ -1339,8 +1339,6 @@ def makecalctable(scans, subarray, filebase, job, antennalist, srclist, specavg,
 			scan_num, srclist[src_id][3]))
 		calc.append(indent21_1("SCAN %d QUAL", "%d", \
 			scan_num, srclist[src_id][4]))
-		calc.append(indent21_1("SCAN %d OVERSAMP", "%d", \
-			scan_num, os))
 		scan_num += 1
 
 	neop = len(job_eop)
