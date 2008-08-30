@@ -27,6 +27,7 @@ Version 1.10
 * fix bin ordering for pulsars.  Still something awry here.
 * remove all Makefile stuff
 * respect DIFX_GROUP_ID and set permissions
+* increase precision for RA and Dec
 * version for NRAO-DiFX 1.1
 
 Version 1.9
