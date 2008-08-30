@@ -1336,9 +1336,9 @@ def makecalctable(scans, subarray, filebase, job, antennalist, srclist, specavg,
 			scan_num, config_name))
 		calc.append(indent21_1("SCAN %d REAL NAME", "%s", \
 			scan_num, srclist[src_id][0]))
-		calc.append(indent21_1("SCAN %d SRC RA", "%15.13f", \
+		calc.append(indent21_1("SCAN %d SRC RA", "%17.15f", \
 			scan_num, srclist[src_id][1]))
-		calc.append(indent21_1("SCAN %d SRC DEC", "%15.13f", \
+		calc.append(indent21_1("SCAN %d SRC DEC", "%17.15f", \
 			scan_num, srclist[src_id][2]))
 		calc.append(indent21_1("SCAN %d CALCODE", "%s", \
 			scan_num, srclist[src_id][3]))
