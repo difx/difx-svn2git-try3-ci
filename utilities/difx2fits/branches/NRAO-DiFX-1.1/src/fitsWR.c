@@ -52,7 +52,7 @@ const DifxInput *DifxInput2FitsWR(const DifxInput *D,
 	int i;
 	int nColumn;
 	int nRowBytes;
-	char *fitsbuf, *p_fitsbuf;
+	char **fitsbuf, *p_fitsbuf;
 	char antName[64];
 	char line[1000];
 	double mjd;
@@ -60,6 +60,8 @@ const DifxInput *DifxInput2FitsWR(const DifxInput *D,
 	double time;
 	float timeInt;
 	FILE *in;
+	int antId;
+	double *mjdLast;
 	/* 1-based index for FITS below */
 	int32_t antId1;
 	
@@ -75,19 +77,15 @@ const DifxInput *DifxInput2FitsWR(const DifxInput *D,
 	nRowBytes = FitsBinTableSize(columns, nColumn);
 
 	/* calloc space for storing table in FITS format */
-	fitsbuf = (char *)calloc(nRowBytes, 1);
-	if(fitsbuf == 0)
+	fitsbuf = (char **)malloc(D->nAntenna*sizeof(char *));
+	for(i = 0; i < D->nAntenna; i++)
 	{
-		return 0;
+		fitsbuf[i] = (char *)calloc(nRowBytes, 1);
 	}
+
+	mjdLast = (double *)calloc(D->nAntenna, sizeof(double));
 
 	mjd2dayno((int)(D->mjdStart), &refDay);
-
-	/* calloc space for storing table in FITS format */
-	if((fitsbuf = (char *)calloc(nRowBytes, 1)) == 0)
-	{
-		return 0;
-	}
 
 	fitsWriteBinTable(out, nColumn, columns, nRowBytes, "WEATHER");
 	arrayWriteKeys(p_fits_keys, out);
@@ -129,19 +127,23 @@ const DifxInput *DifxInput2FitsWR(const DifxInput *D,
 			timeInt = 0.0;
 			
 			antId1 = DifxInputGetAntennaId(D, antName) + 1;
-			if(antId1 <= 0)
+			if(antId1 <= 0 || antId1 > D->nAntenna)
 			{
 				continue;
 			}
+			antId = antId1 - 1;
 			
-			mjd = time + (int)(D->mjdStart);
-			if(mjd < D->mjdStart || mjd > D->mjdStop)
+			/* see if we need to write the preceding record */
+			if(mjd >= D->mjdStart && 
+			   mjdLast[antId] < D->mjdStart && 
+			   mjdLast[antId] > 50000.0)
 			{
-				continue;
+				fitsWriteBinRow(out, fitsbuf[antId]);
 			}
 
-			p_fitsbuf = fitsbuf;
-
+			/* populate data structure for this record, regardless
+			   of whether it will be written or not */
+			p_fitsbuf = fitsbuf[antId];\
 			FITS_WRITE_ITEM(time, p_fitsbuf);
 			FITS_WRITE_ITEM(timeInt, p_fitsbuf);
 			FITS_WRITE_ITEM(antId1, p_fitsbuf);
@@ -152,19 +154,31 @@ const DifxInput *DifxInput2FitsWR(const DifxInput *D,
 			FITS_WRITE_ITEM(wr.windDir, p_fitsbuf);
 			FITS_WRITE_ITEM(wr.windGust, p_fitsbuf);
 			FITS_WRITE_ITEM(wr.precipitation, p_fitsbuf);
-
-			testFitsBufBytes(p_fitsbuf - fitsbuf, nRowBytes, "WR");
-
+			testFitsBufBytes(p_fitsbuf - fitsbuf[antId], nRowBytes, "WR");
 #ifndef WORDS_BIGENDIAN
 			FitsBinRowByteSwap(columns, nColumn, fitsbuf);
 #endif
-			fitsWriteBinRow(out, fitsbuf);
+
+			/* write this record if it is withing the timerange or
+			   the record immediately after the timerange */
+			if( (mjd >= D->mjdStart && mjd <= D->mjdStop) ||
+			    (mjd > D->mjdStop && mjdLast[antId] < D->mjdStop) )
+			{
+				fitsWriteBinRow(out, fitsbuf[antId]);
+			}
+
+			mjdLast[antId] = mjd;
 		}
 	}
 
 	/* close the file, free memory, and return */
 	fclose(in);
+	for(i = 0; i < D->nAntenna; i++)
+	{
+		free(fitsbuf[i]);
+	}
 	free(fitsbuf);
+	free(mjdLast);
 
 	return D;
 }
