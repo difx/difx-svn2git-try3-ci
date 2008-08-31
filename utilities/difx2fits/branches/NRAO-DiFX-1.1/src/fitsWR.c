@@ -108,67 +108,67 @@ const DifxInput *DifxInput2FitsWR(const DifxInput *D,
 		{
 			continue;
 		}
-		else 
-		{
-			/* take out * from line */
-			for(i = 0; line[i]; i++)
-			{
-				if(line[i] == '*')
-				{
-					line[i] = ' ';
-				}
-			}
-			if(parseWeather(line, &wr, antName) == 0)
-			{
-				continue;
-			}
-			
-			time = wr.time - refDay;
-			timeInt = 0.0;
-			
-			antId1 = DifxInputGetAntennaId(D, antName) + 1;
-			if(antId1 <= 0 || antId1 > D->nAntenna)
-			{
-				continue;
-			}
-			antId = antId1 - 1;
-			
-			/* see if we need to write the preceding record */
-			if(mjd >= D->mjdStart && 
-			   mjdLast[antId] < D->mjdStart && 
-			   mjdLast[antId] > 50000.0)
-			{
-				fitsWriteBinRow(out, fitsbuf[antId]);
-			}
 
-			/* populate data structure for this record, regardless
-			   of whether it will be written or not */
-			p_fitsbuf = fitsbuf[antId];\
-			FITS_WRITE_ITEM(time, p_fitsbuf);
-			FITS_WRITE_ITEM(timeInt, p_fitsbuf);
-			FITS_WRITE_ITEM(antId1, p_fitsbuf);
-			FITS_WRITE_ITEM(wr.temp, p_fitsbuf);
-			FITS_WRITE_ITEM(wr.pressure, p_fitsbuf);
-			FITS_WRITE_ITEM(wr.dewPoint, p_fitsbuf);
-			FITS_WRITE_ITEM(wr.windSpeed, p_fitsbuf);
-			FITS_WRITE_ITEM(wr.windDir, p_fitsbuf);
-			FITS_WRITE_ITEM(wr.windGust, p_fitsbuf);
-			FITS_WRITE_ITEM(wr.precipitation, p_fitsbuf);
-			testFitsBufBytes(p_fitsbuf - fitsbuf[antId], nRowBytes, "WR");
+		/* take out * from line */
+		for(i = 0; line[i]; i++)
+		{
+			if(line[i] == '*')
+			{
+				line[i] = ' ';
+			}
+		}
+		if(parseWeather(line, &wr, antName) == 0)
+		{
+			continue;
+		}
+		
+		time = wr.time - refDay;
+		timeInt = 0.0;
+		
+		antId = DifxInputGetAntennaId(D, antName);
+		if(antId < 0 || antId >= D->nAntenna)
+		{
+			printf("skipping ant %d\n", antId);
+			continue;
+		}
+		antId1 = antId + 1;
+		
+		/* see if we need to write the preceding record */
+		mjd = time + (int)(D->mjdStart);
+		if(mjd >= D->mjdStart && 
+		   mjdLast[antId] < D->mjdStart && 
+		   mjdLast[antId] > 50000.0)
+		{
+			fitsWriteBinRow(out, fitsbuf[antId]);
+		}
+
+		/* populate data structure for this record, regardless
+		   of whether it will be written or not */
+		p_fitsbuf = fitsbuf[antId];
+		FITS_WRITE_ITEM(time, p_fitsbuf);
+		FITS_WRITE_ITEM(timeInt, p_fitsbuf);
+		FITS_WRITE_ITEM(antId1, p_fitsbuf);
+		FITS_WRITE_ITEM(wr.temp, p_fitsbuf);
+		FITS_WRITE_ITEM(wr.pressure, p_fitsbuf);
+		FITS_WRITE_ITEM(wr.dewPoint, p_fitsbuf);
+		FITS_WRITE_ITEM(wr.windSpeed, p_fitsbuf);
+		FITS_WRITE_ITEM(wr.windDir, p_fitsbuf);
+		FITS_WRITE_ITEM(wr.windGust, p_fitsbuf);
+		FITS_WRITE_ITEM(wr.precipitation, p_fitsbuf);
+		testFitsBufBytes(p_fitsbuf - fitsbuf[antId], nRowBytes, "WR");
 #ifndef WORDS_BIGENDIAN
-			FitsBinRowByteSwap(columns, nColumn, fitsbuf);
+		FitsBinRowByteSwap(columns, nColumn, fitsbuf[antId]);
 #endif
 
-			/* write this record if it is withing the timerange or
-			   the record immediately after the timerange */
-			if( (mjd >= D->mjdStart && mjd <= D->mjdStop) ||
-			    (mjd > D->mjdStop && mjdLast[antId] < D->mjdStop) )
-			{
-				fitsWriteBinRow(out, fitsbuf[antId]);
-			}
-
-			mjdLast[antId] = mjd;
+		/* write this record if it is withing the timerange or
+		   the record immediately after the timerange */
+		if( (mjd >= D->mjdStart && mjd <= D->mjdStop) ||
+		    (mjd > D->mjdStop && mjdLast[antId] < D->mjdStop) )
+		{
+			fitsWriteBinRow(out, fitsbuf[antId]);
 		}
+
+		mjdLast[antId] = mjd;
 	}
 
 	/* close the file, free memory, and return */
