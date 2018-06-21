@@ -6,7 +6,7 @@ OBSCODE:            MA008
 DIFX VERSION:       DiFX-trunk
 SUBJOB ID:          0
 SUBARRAY ID:        0
-VEX FILE:           /Exps/ma008/v0/test64mhz/ma008.vex.difx
+VEX FILE:           ma008.vex.difx
 START MJD:          57847.0625000
 START YEAR:         2017
 START MONTH:        4
@@ -81,5 +81,5 @@ EOP 4 UT1_UTC (sec): 0.4634210000000000
 EOP 4 XPOLE (arcsec): 0.0095400000000000
 EOP 4 YPOLE (arcsec): 0.3846400000000000
 NUM SPACECRAFT:     0
-IM FILENAME:        /Exps/ma008/v0/test64mhz/ma008_1.im
-FLAG FILENAME:      /Exps/ma008/v0/test64mhz/ma008_1.flag
+IM FILENAME:        ma008_1.im
+FLAG FILENAME:      ma008_1.flag
