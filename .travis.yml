@@ -19,7 +19,8 @@ addons:
     - pgplot5
     - subversion
     - libgsl-dev
-    - openmpi-dev
+    - libopenmpi-dev
+    - openmpi-bin
 
 python:
   - 2.7
