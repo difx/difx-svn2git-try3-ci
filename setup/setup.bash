@@ -2,14 +2,19 @@
 export DIFX_VERSION=trunk
 
 ####### ROOT PATHS ##########################
-export DIFXROOT=/usr/local/difx
+export DIFXROOT=${DIFXROOT_OVERRIDE:-/usr/local/difx}
 export DIFX_PREFIX=$DIFXROOT
 export PGPLOTDIR=
-export IPPROOT=/opt/intel
+export IPPROOT=${IPPROOT_OVERRIDE:-/opt/intel}
 
 ####### COMPILER ############################
-export DIFXMPIDIR=/usr
-export MPICXX="${DIFXMPIDIR}"/bin/mpicxx
+if ! command -v mpicxx &> /dev/null  # this is a bash-ism
+then
+    export DIFXMPIDIR=/usr
+    export MPICXX="${DIFXMPIDIR}"/bin/mpicxx
+else
+    export MPICXX=`command -v mpicxx`
+fi
 
 ####### LIBRARY PATHS #######################
 ####### Uncomment and modify if needed, #####
@@ -127,7 +132,9 @@ else
 fi
 
 ####### LIBRARY/EXECUTABLE PATHS ############
-PrependPath PATH             "${DIFXMPIDIR}"/bin
+if [ -z "${DIFXMPIDIR}" ]; then
+    PrependPath PATH             "${DIFXMPIDIR}"/bin
+fi
 PrependPath PATH             "${DIFXROOT}"/bin
 if [ -z "${IPP_LIBRARY_PATH}" ]; then
     PrependPath LD_LIBRARY_PATH "${IPP_LIBRARY_PATH}"
