@@ -29,8 +29,8 @@ git:
   depth: 99999
 
 install:
-  - DIFXROOT_OVERRIDE=$PWD . setup/setup.bash
-  - python2 setup/install-difx --noipp
+  - DIFXROOT_OVERRIDE=$PWD . setup.bash
+  - python2 install-difx --noipp
 
 script:
   - /bin/true
