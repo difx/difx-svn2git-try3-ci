@@ -1,0 +1,36 @@
+language: python
+sudo: true
+dist: focal
+
+addons:
+  apt:
+    packages:
+    - pkg-config
+    - g++
+    - gfortran
+    - bison
+    - flex
+    - libexpat1-dev
+    - fftw3-dev
+    - autoconf
+    - automake
+    - libtool
+    - build-essential
+    - pgplot5
+    - subversion
+    - libgsl-dev
+    - libopenmpi-dev
+    - openmpi-bin
+
+python:
+  - 2.7
+
+git:
+  depth: 99999
+
+install:
+  - DIFXROOT_OVERRIDE=$PWD . setup/setup.bash
+  - python2 setup/install-difx --noipp
+
+script:
+  - /bin/true
